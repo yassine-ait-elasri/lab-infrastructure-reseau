@@ -42,3 +42,8 @@ Simulation de grade production d'une infrastructure réseau d'agence nationale, 
 
 #### Phase 4 : Accès Zero-Trust (à venir)
 
+📂 Documentation détaillée
+
+Phase 1 — Architecture réseau
+
+Phase 2 — SOC et automatisation
