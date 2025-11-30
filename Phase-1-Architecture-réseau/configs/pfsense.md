@@ -120,5 +120,5 @@ netstat -rn
 pfctl -sr       # affiche règles
 pfctl -s state  # affiche états de session (si connexions en cours)
 ```
-<img width="908" height="910" alt="image" src="https://github.com/user-attachments/assets/fe408b1e-dfe3-42aa-98ca-084267cfa762" />
+<img width="1447" height="951" alt="image" src="https://github.com/user-attachments/assets/fe408b1e-dfe3-42aa-98ca-084267cfa762" />
 <img width="1447" height="951" alt="image" src="https://github.com/user-attachments/assets/e16e75b1-93c5-47e4-959d-a04a208a31b0" />
