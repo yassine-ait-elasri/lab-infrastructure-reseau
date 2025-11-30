@@ -103,10 +103,12 @@ Cette page décrit le déploiement de pfSense en tant que pare-feu périmétriqu
 
 ### a) Vérifier interfaces & IP (GUI)
 - **Status → Interfaces** : capture d’écran montrant `em0/em1/em2/em3` UP et IPs assignées.
+<p align="center"><img width="731" height="907" alt="image" src="https://github.com/user-attachments/assets/65e522fa-ac61-4b96-afcc-f9927856d7b3" /></p>
 
 ### b) Ping via GUI (Diagnostics → Ping)
 - Tester : `10.0.1.1` (VyOS), `10.0.254.1` (VyOS management), `8.8.8.8` (Internet)
 - Capture d’écran : résultat OK (0% loss).
+<img width="1471" height="868" alt="image" src="https://github.com/user-attachments/assets/65cb4e03-5520-4444-9c2e-9b958a6e145c" />
 
 ### c) Vérifier routes (CLI/SSH)
 Se connecter en SSH au shell pfSense (`Diagnostics → Command Prompt` ou `SSH`) et exécuter :
@@ -117,3 +119,6 @@ netstat -rn
 # afficher règles pf (pfSense)
 pfctl -sr       # affiche règles
 pfctl -s state  # affiche états de session (si connexions en cours)
+```
+<img width="908" height="910" alt="image" src="https://github.com/user-attachments/assets/fe408b1e-dfe3-42aa-98ca-084267cfa762" />
+<img width="1447" height="951" alt="image" src="https://github.com/user-attachments/assets/e16e75b1-93c5-47e4-959d-a04a208a31b0" />
