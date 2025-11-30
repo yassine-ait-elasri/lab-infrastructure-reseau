@@ -1,0 +1,330 @@
+{
+  "name": "autoblock-receive-and-update-and-Apply",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "3a64f6b1-ff67-4b77-b032-e0a37406207d",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        16
+      ],
+      "id": "b95b1eea-db8a-4eb8-8fa4-559ab41e29db",
+      "name": "Webhook",
+      "webhookId": "3a64f6b1-ff67-4b77-b032-e0a37406207d"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        704,
+        -16
+      ],
+      "id": "ff16464a-fcb3-43aa-9014-c206e1a05abb",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// items[0] → alias API response\n// items[1] → IP extracted earlier (from normalizeAlert node)\n\nconst alias = items[0].json.data;\nconst offendingIp = items[1].json.ip;  // <-- use .ip, not .offendingIp\n\n// Ensure valid arrays\nlet addresses = Array.isArray(alias.address) ? alias.address : [];\nlet details = Array.isArray(alias.detail) ? alias.detail : [];\n\n// Avoid duplicate entries\nif (offendingIp && !addresses.includes(offendingIp)) {\n  addresses.push(offendingIp);\n  details.push(`${offendingIp}|${new Date().toISOString()}`);\n}\n\nreturn [\n  {\n    json: {\n      id: alias.id,\n      name: alias.name,\n      type: alias.type,\n      descr: alias.descr + \" (managed by n8n)\",\n      address: addresses,\n      detail: details\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        -16
+      ],
+      "id": "5301cd9b-eabf-424c-a11f-32ffdade2df1",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "http://10.0.254.2/api/v2/firewall/alias",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"id\": {{ $json.id }},\n  \"name\": \"{{ $json.name }}\",\n  \"type\": \"{{ $json.type }}\",\n  \"descr\": \"{{ $json.descr }}\",\n  \"address\": {{ JSON.stringify($json.address) }},\n  \"detail\": {{ JSON.stringify($json.detail) }}\n}\n",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1264,
+        -16
+      ],
+      "id": "2c4095ce-ebe3-4455-b293-c3d7e40a3cf0",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "0ItIiI9VTrE8xRop",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.0.254.2/api/v2/firewall/apply",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1472,
+        -16
+      ],
+      "id": "6ad840a7-aa0b-4705-befd-b8b03b2a349f",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "0ItIiI9VTrE8xRop",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Full Suricata event is inside: items[0].json.body\nconst ev = items[0].json.body;\n\n// Extract offender IP\nconst ip = ev.src_ip || ev.dest_ip || null;\n\n// Extract signature\nconst signature =\n    (ev.alert && ev.alert.signature) ||\n    ev.signature ||\n    \"unknown\";\n\n// Extract SID\nconst sid =\n    (ev.alert && ev.alert.signature_id) ||\n    ev.signature_id ||\n    null;\n\n// Extract timestamp normally\nlet ts = ev.timestamp || new Date().toISOString();\n\n// Normalize timestamp safely\ntry {\n    ts = new Date(ts).toISOString();\n} catch {\n    ts = new Date().toISOString();\n}\n\n// Epoch seconds\nlet epoch = Math.floor(new Date(ts).getTime() / 1000);\nif (!Number.isFinite(epoch)) {\n    epoch = Math.floor(Date.now() / 1000);\n}\n\nreturn [\n    {\n        json: {\n            ip,\n            signature,\n            sid,\n            timestamp: ts,\n            epoch\n        }\n    }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        16,
+        16
+      ],
+      "id": "e04b3eb4-44d4-4429-a04f-32447e386801",
+      "name": "parse alerts  - return useful informations"
+    },
+    {
+      "parameters": {
+        "url": "http://10.0.254.2/api/v2/firewall/alias?id=0",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        464,
+        -144
+      ],
+      "id": "f1d8ea58-fb5d-4200-8b5e-7e9dabc20f44",
+      "name": "pfsense alias exist ?",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "0ItIiI9VTrE8xRop",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "015388b3-3b2a-4bbf-8382-4dbd78d54ddc",
+              "leftValue": "={{ $json.sid }}",
+              "rightValue": 3000011,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        16
+      ],
+      "id": "77e79d74-133d-4e6a-91cc-90e8d750b818",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        688,
+        176
+      ],
+      "id": "d4219bfd-0ab2-4c8f-950f-7109941db1a8",
+      "name": "No Operation, do nothing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "parse alerts  - return useful informations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse alerts  - return useful informations": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pfsense alias exist ?": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "pfsense alias exist ?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timeSavedPerExecution": 1
+  },
+  "versionId": "b144a6e5-04fd-44c1-aedd-e35ab0a6323d",
+  "meta": {
+    "instanceId": "4a71f1fa5e3266c1dd7a09b96ea78c1af12b1e9a7e24a66309b4869c7f378164"
+  },
+  "id": "3eNO2ASTophsihEq",
+  "tags": []
+}
