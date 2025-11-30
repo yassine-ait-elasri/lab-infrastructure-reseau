@@ -86,13 +86,8 @@ Permet d’héberger plusieurs routeurs/switches simulés (Distribution/Accès)
   - GUI pfSense
 - Snapshots avant modifications critiques (bonne pratique DevOps/Infra)
 
----
 
-# 🏗️ Étapes de Mise en Place
-
----
-
-## 1) Création des réseaux Host-Only dans VirtualBox
+##  Création des réseaux Host-Only dans VirtualBox
 
 ### **Via Interface Graphique**
 **VirtualBox** →  
