@@ -1,5 +1,3 @@
-
-
 # 📘 README.md — Phase 2 : Architecture de Supervision & SOAR Léger
 
 
@@ -85,6 +83,8 @@ Fonctionne comme un **tampon centralisé** :
 - Consommateurs : `worker.py` (x1 ou xN)
 - Garantit durabilité + atomicité via BLPOP / RPOPLPUSH.
 
+
+
 ---
 
 ## 🟡 Workers Python — Automatisation résiliente
@@ -108,6 +108,17 @@ REDIS_PORT=6379
 REDIS_PASSWORD=CHANGEME
 N8N_WEBHOOK_URL=https://10.0.254.4:5678/webhook/XXXXXXXX
 ````
+## 🚀 Comparaison : Évolutivité du Pipeline d'Alertes
+
+Ce tableau illustre pourquoi l'architecture basée sur **Redis (File d'attente)** est essentielle pour l'évolutivité et la robustesse du système SOAR, par rapport à une approche de lecture directe des fichiers.
+
+| Caractéristique | Architecture **Workers + Redis** | Architecture **50 Scripts Lisant `eve.json`** |
+| :--- | :--- | :--- |
+| **Sécurité des données** | **Élevée** : L'utilisation de `BRPOPLPUSH` et des listes de traitement garantit qu'un message n'est **jamais traité deux fois ou perdu** en cas de crash. | **Faible** : Chaque script doit gérer son propre *offset* (position de lecture) dans le fichier. Concurrence élevée = risque de **doublons** ou de **perte** d'événements. |
+| **Gestion du Fichier** | **Simplifiée** : Un seul script (le parser Suricata initial, `script.sh`) lit le fichier `eve.json`. Il gère la rotation, la compression et l'offset. | **Catastrophique** : 50 processus essaient de lire le même fichier simultanément, nécessitant 50 verrous de fichier, ce qui cause des **ralentissements E/S (I/O) massifs** et des erreurs. |
+| **Performance** | **Élevée** : Redis est extrêmement rapide. L'opération `BRPOPLPUSH` est **atomique** et ultra-optimisée pour la concurrence. | **Très faible** : Le goulot d'étranglement est la lecture/écriture sur disque (`eve.json`), qui est beaucoup plus lente que la **RAM (Redis)**. |
+| **Charge CPU** | **Faible** : Les Workers sont **bloquants** (`B` dans `BRPOPLPUSH`). Ils dorment lorsqu'il n'y a pas d'alerte et consomment **0% de CPU**. | **Élevée** : Les 50 scripts devraient interroger le fichier constamment (ou utiliser des mécanismes de *inotify* complexes), ce qui est moins efficace que le blocage natif de Redis. |
+| **Résilience** | **Robuste** : Le `FAILED_LIST` gère les échecs récurrents sans impacter les autres workers. | **Non-existante** : Si un script échoue, son *offset* est perdu ou son traitement est incomplet. |
 
 ---
 
