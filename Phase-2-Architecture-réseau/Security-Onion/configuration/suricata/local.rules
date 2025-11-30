@@ -1,0 +1,10 @@
+# Add your custom Suricata rules in this file.
+alert icmp any any -> 10.0.4.0/24 any (msg:"DMZ ICMP Ping Sweep Detected"; itype:8; threshold:type threshold, track by_src, count 5, seconds 10; sid:3000001; rev:2; classtype:network-scan; metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert tcp any any -> 10.0.4.0/24 any (msg:"DMZ TCP SYN Scan Detected"; flags:S; threshold:type threshold, track by_src, count 10, seconds 10; sid:3000002; rev:2; classtype:network-scan; metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert http !10.0.254.0/24 any -> 10.0.4.0/24 80,443 (msg:"DMZ Unauthorized /admin Access Attempt";http.uri; content:"/admin"; nocase;classtype:web-application-attack;sid:3000004; rev:10;metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert http any any -> 10.0.4.0/24 80,443 (msg:"DMZ Suspicious Web Upload Attempt"; flow:to_server,established; http.method; content:"POST"; http.uri; content:".php"; sid:3000007; rev:2; classtype:web-application-attack; metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert udp any any -> 10.0.4.0/24 53 (msg:"DMZ DNS Exfiltration Attempt"; dns_query; byte_test:2,>,50,0; sid:3000006; rev:2; classtype:data-theft; metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert http any any -> 10.0.4.0/24 80,443 (msg:"DMZ Web App Multiple Failed Login Attempt"; flow:to_server,established; http.method; content:"POST"; http.uri; content:"login"; threshold:type threshold, track by_src, count 5, seconds 60; sid:3000008; rev:2; classtype:attempted-admin; metadata:signature_severity Major, tag DMZ, created_at 2025_11_12;)
+alert http any any -> 10.0.4.0/24 80,443 (msg:"DMZ HTTP Bruteforce Test - High Request Rate"; threshold:type both, track by_src, count 5, seconds 1; sid:3000011; rev:1; classtype:web-application-attack; metadata:signature_severity Major, tag DMZ, created_at 2025_11_28;)[so@so-monitor ~]$
+
+
