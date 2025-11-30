@@ -54,3 +54,27 @@ exit
 
 
 ## d) Preuve de bon fonctionnement (PoC)
+
+```bash
+ssh vyos@10.0.254.1
+```
+
+<img width="996" height="700" alt="image" src="https://github.com/user-attachments/assets/b116ab6a-8e0e-41d8-8903-b2effc0301bd" />
+
+#### PoC VyOS — Connectivité Phase 1
+
+Toutes les interfaces configurées sont opérationnelles :
+
+  <img width="1178" height="222" alt="image" src="https://github.com/user-attachments/assets/2848ce56-f721-4449-a518-666c8a6439dc" />
+  
+La table de routage reflète toutes les sous-réseaux et le défaut vers pfSense :
+
+<img width="957" height="373" alt="image" src="https://github.com/user-attachments/assets/8391755c-ec72-4bce-9ccc-9e590a998827" />
+
+Test de connectivité interne et externe :
+
+<img width="838" height="193" alt="image" src="https://github.com/user-attachments/assets/56e22c98-2f26-43bd-b195-c719ab62503c" />
+<img width="808" height="250" alt="image" src="https://github.com/user-attachments/assets/225b840c-6528-4e59-b5c8-5414715ff70e" />
+<img width="842" height="477" alt="image" src="https://github.com/user-attachments/assets/920b0c4a-8bce-48d1-a57a-47b95396b631" />
+<img width="1917" height="320" alt="image" src="https://github.com/user-attachments/assets/962982bb-52f2-4801-87d9-9ffbfe480589" />
+
